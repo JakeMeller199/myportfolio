@@ -13,8 +13,8 @@ A no-build static portfolio made for GitHub Pages. Upload the whole repository; 
 1. Open `editor.html` locally in a browser (it never needs hosting).
 2. Update artist details, add/edit/reorder project cards, tags, media paths and descriptions.
 3. Click **Export content-data.js** and replace `content/content-data.js` in the site with the download.
-4. Add your images/video poster images under `assets/`, commit, and republish.
+4. Keep all selected images and video files in `content/`, commit, and republish. The editor always writes deployable paths such as `content/my-image.webp`, never Windows drive paths.
 
-`rank` is the source of truth: it determines both the homepage featured pieces and the unfiltered Work order. Lower ranks appear first. Projects can hold several tags. For video, use a lightweight poster image in `media` and provide its video file path or URL in `videoUrl`; the gallery deliberately does not preload full video files, and loads a player only when a visitor opens that project.
+`rank` is the source of truth: it determines both the homepage featured pieces and the unfiltered Work order. Lower ranks appear first. Any tag you add becomes a Work filter automatically. You can also create optional collections and filter those on Work. For YouTube, paste the normal share/watch URL: the site creates the thumbnail and embedded player automatically. For self-hosted video, use a web-friendly MP4 or WebM and an optional poster image.
 
 Replace `assets/portrait.svg` with your portrait and update the `<img>` path in `about.html`. Replace the placeholder SVGs with your own raster images, WebP posters, or video poster files while retaining each project’s `ratio`.

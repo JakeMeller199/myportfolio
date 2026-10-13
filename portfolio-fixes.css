@@ -1,0 +1,19 @@
+/* Cards copy the media's own shape (Auto) or the resolution picked in the editor, with a slim caption strip flush underneath. */
+.project-media{position:relative;overflow:hidden;background:#090707;box-shadow:6px 7px 0 rgba(0,0,0,.65)}
+.project-card .project-image{display:block;width:100%;height:auto;aspect-ratio:auto;object-fit:cover;background:transparent;box-shadow:none;transition:transform .35s,filter .35s}
+.project-card .project-image.yt{aspect-ratio:16/9}
+.project-card .project-image.yt-bars{object-fit:cover}
+.project-card[data-frame] .project-image,.project-card[data-frame] .project-empty{aspect-ratio:var(--frame-ratio)}
+.project-card:hover .project-image{transform:scale(1.04);filter:contrast(1.15)}
+.project-meta{margin:0;padding:8px 10px;background:rgba(0,0,0,.62);align-items:baseline}
+.project-meta span{opacity:.75}
+.project-empty{width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#25040a,#070304 60%);display:flex;flex-direction:column;justify-content:end;padding:18px;color:#fff;box-sizing:border-box}
+.project-empty[hidden]{display:none}
+.project-empty span{font-size:10px;letter-spacing:.14em}
+.project-empty b{font:clamp(1rem,2vw,2rem) var(--display);line-height:.9;margin-top:8px}
+.modal-video{aspect-ratio:16/9;border:0;width:100%;height:auto}
+.modal-media{width:100%}
+.modal-file{width:100%;height:auto;max-height:78vh;object-fit:contain;background:#000}
+.audio-note{font-size:11px;color:#f4d21f;margin:10px 0 0}
+.filter-divider{align-self:center;font-size:10px;text-transform:uppercase;font-weight:bold;letter-spacing:.1em;opacity:.7;margin-left:10px}
+.collection-tag{background:var(--red);color:#fff}
