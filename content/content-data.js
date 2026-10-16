@@ -93,10 +93,11 @@ window.PORTFOLIO_CONTENT = {
         "game-development"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": true
     },
     {
       "id": "moshrooms2",
@@ -122,7 +123,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": true
     },
     {
       "id": "moshrooms1",
@@ -148,7 +150,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": true
     },
     {
       "id": "hyperpop-1",
@@ -172,10 +175,11 @@ window.PORTFOLIO_CONTENT = {
         "muc"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": true
     },
     {
       "id": "muc1",
@@ -197,10 +201,11 @@ window.PORTFOLIO_CONTENT = {
         "muc"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "eisce-visuals",
@@ -222,10 +227,11 @@ window.PORTFOLIO_CONTENT = {
         "muc"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "crypt-flesh-wall",
@@ -248,10 +254,11 @@ window.PORTFOLIO_CONTENT = {
         "the-crypt-bloodlines"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptbloodlines1",
@@ -273,7 +280,7 @@ window.PORTFOLIO_CONTENT = {
         "the-crypt-bloodlines"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [
         {
           "kind": "image",
@@ -282,7 +289,8 @@ window.PORTFOLIO_CONTENT = {
         }
       ],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptbloodlines2",
@@ -304,7 +312,7 @@ window.PORTFOLIO_CONTENT = {
         "the-crypt-bloodlines"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [
         {
           "kind": "image",
@@ -313,7 +321,8 @@ window.PORTFOLIO_CONTENT = {
         }
       ],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptbloodlines3",
@@ -335,7 +344,7 @@ window.PORTFOLIO_CONTENT = {
         "the-crypt-bloodlines"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [
         {
           "kind": "image",
@@ -344,7 +353,8 @@ window.PORTFOLIO_CONTENT = {
         }
       ],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptbloodlines5",
@@ -366,10 +376,11 @@ window.PORTFOLIO_CONTENT = {
         "the-crypt-bloodlines"
       ],
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptbloodlinesposter",
@@ -400,7 +411,8 @@ window.PORTFOLIO_CONTENT = {
         }
       ],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptblackplanet1",
@@ -426,7 +438,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptblackplanet2",
@@ -452,7 +465,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "cryptblackplanet3",
@@ -478,7 +492,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "night-shift",
@@ -500,7 +515,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "soul-bridge",
@@ -522,7 +538,8 @@ window.PORTFOLIO_CONTENT = {
       "scale": 100,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "i-am",
@@ -541,10 +558,11 @@ window.PORTFOLIO_CONTENT = {
       "videoUrl": "",
       "accent": "red",
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "night-call",
@@ -565,10 +583,11 @@ window.PORTFOLIO_CONTENT = {
       "videoUrl": "",
       "accent": "red",
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "extra": [],
       "thumbMode": "auto",
-      "thumb": ""
+      "thumb": "",
+      "featured": false
     },
     {
       "id": "orderonepromotionalart",
@@ -578,7 +597,7 @@ window.PORTFOLIO_CONTENT = {
       "type": "image",
       "resolution": "auto",
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "thumbMode": "auto",
       "thumb": "",
       "extra": [
@@ -613,7 +632,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/21_9aiupscaled4x.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo",
@@ -637,7 +657,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00396.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo2",
@@ -661,7 +682,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00393.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo3",
@@ -691,7 +713,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00389.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo4",
@@ -715,7 +738,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00348.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo5",
@@ -739,7 +763,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00344.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo6",
@@ -763,7 +788,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00052.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo7",
@@ -787,7 +813,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00339.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "orderonepromo8",
@@ -811,7 +838,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "",
       "media": "content/HighresScreenshot00337.png",
       "videoUrl": "",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "aotvrfgtrailer",
@@ -821,7 +849,7 @@ window.PORTFOLIO_CONTENT = {
       "type": "image",
       "resolution": "auto",
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "thumbMode": "auto",
       "thumb": "",
       "extra": [],
@@ -839,7 +867,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "I am developing this game in Unreal Engine, I also completely animated and directed this trailer.",
       "media": "",
       "videoUrl": "https://youtu.be/g2prQPcjq2c?si=vx7OQr9f1F-DifLm",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     },
     {
       "id": "rebelofnature",
@@ -849,7 +878,7 @@ window.PORTFOLIO_CONTENT = {
       "type": "image",
       "resolution": "auto",
       "fit": "fill",
-      "scale": 100,
+      "scale": 200,
       "thumbMode": "auto",
       "thumb": "",
       "extra": [],
@@ -866,7 +895,8 @@ window.PORTFOLIO_CONTENT = {
       "credits": "Rebel Of Nature is a Demo Game Created for the uOttawa June Jam 2023 With the topic \"Nature Strikes Back!\" I developed this in 2 weeks.",
       "media": "",
       "videoUrl": "https://youtu.be/sU5stj13YMw?si=G8WFh_cXk4msTSzd",
-      "accent": "red"
+      "accent": "red",
+      "featured": false
     }
   ]
 };

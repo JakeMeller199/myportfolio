@@ -52,8 +52,9 @@
 /* Page copy: hero, section lead, contact, about */
 .hero:after{content:none!important}
 .hero-role{position:relative;z-index:1;margin:0 0 14px;font:bold clamp(.9rem,1.6vw,1.25rem) var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--yellow)}
-.hero-tags{list-style:none;display:flex;flex-wrap:wrap;gap:10px;padding:0;margin:22px 0 0;position:relative;z-index:1}
-.hero-tags li{border:2px solid var(--paper);padding:7px 12px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.08em}
+.hero-tags{list-style:none;display:flex;flex-wrap:wrap;gap:6px 0;padding:0;margin:20px 0 0;position:relative;z-index:1}
+.hero-tags li{border:0;background:none;padding:0;font:bold 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(245,241,233,.74)}
+.hero-tags li+li:before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);margin:0 14px;vertical-align:middle}
 .section-title{margin-bottom:16px}
 .section-lead{max-width:560px;line-height:1.7;margin:0 0 46px}
 .footer .contact-title{margin:0 0 16px;font:clamp(2.4rem,6vw,5.5rem)/.9 var(--display);letter-spacing:-.05em;max-width:900px}
@@ -64,3 +65,18 @@
 .areas-title{display:block;margin-top:36px}
 .areas-title+.discipline-list{margin-top:12px}
 .page-hero .eyebrow{display:block;margin-bottom:22px}
+
+/* Hero: name sits higher; media carousel fades in from the right */
+.hero{height:auto;min-height:min(100svh,800px);justify-content:flex-start;padding:clamp(104px,16vh,160px) 5vw clamp(48px,9vh,90px)}
+.hero>*:not(.hero-carousel){position:relative;z-index:1}
+.hero-carousel{position:absolute;top:0;right:0;bottom:0;width:68%;z-index:0;pointer-events:none;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.5) 38%,#000 80%);mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.5) 38%,#000 80%)}
+@media(max-width:800px){.hero-carousel{width:100%;opacity:.55;-webkit-mask-image:linear-gradient(to right,transparent 12%,#000 100%);mask-image:linear-gradient(to right,transparent 12%,#000 100%)}.hero{padding-top:104px}}
+@media(max-width:520px){.hero-tags{gap:6px 18px}.hero-tags li+li:before{display:none}}
+
+/* Hero carousel slides: fade in on top, old one fades out underneath, media drifts right-to-left the whole time it is on screen */
+.hc-slide{position:absolute;inset:0;overflow:hidden;opacity:0;transition:opacity .6s ease .5s;will-change:opacity}
+.hc-slide.in{opacity:1;transition:opacity 1.2s ease-out}
+.hc-media{position:absolute;top:0;left:0;width:114%;height:100%;object-fit:cover;filter:saturate(.92) brightness(.84);will-change:transform;transform:translate3d(0,0,0)}
+.hc-slide.live .hc-media{animation:hc-drift var(--hc-life,5.4s) linear forwards}
+@keyframes hc-drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-12.28%,0,0)}}
+@media(prefers-reduced-motion:reduce){.hc-slide.live .hc-media{animation:none}.hc-media{width:100%}}

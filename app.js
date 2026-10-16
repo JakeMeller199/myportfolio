@@ -24,6 +24,10 @@
     p.tags = [...new Set((p.tags || []).map(slug).filter(Boolean))];
     p.collectionIds = [...new Set((p.collectionIds || (p.collection ? [p.collection] : [])).map(slug).filter(Boolean))];
   });
+  /* favourites: the homepage shows exactly the posts flagged `featured` (max 4). Older data without any flags defaults to the first 4 by rank. */
+  const ranked = [...data.projects].sort((a, b) => a.rank - b.rank);
+  if (!data.projects.some(p => typeof p.featured === 'boolean')) ranked.slice(0, 4).forEach(p => { p.featured = true; });
+  let favCount = 0; ranked.forEach(p => { p.featured = p.featured === true && favCount < 4; if (p.featured) favCount++; });
   const collection = id => data.collections.find(c => c.id === id) || { id, title: title(id) };
 
   /* ---------- slides: main media first, then the carousel extras ---------- */
@@ -127,7 +131,7 @@
   document.querySelectorAll('[data-mailto]').forEach(el => { el.href = 'mailto:' + data.artist.email; }); /* keeps the button's own wording */
   const flexGrid = g => g && Object.assign(g.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--grid-gap,18px)', alignItems: 'flex-start', justifyContent: 'flex-start' });
   const featured = document.querySelector('[data-featured]'); flexGrid(featured);
-  if (featured) { featured.innerHTML = sorted().slice(0, 4).map(card).join(''); attach(featured, sorted); }
+  if (featured) { featured.innerHTML = sorted().filter(p => p.featured).map(card).join(''); attach(featured, sorted); }
 
   const gallery = document.querySelector('[data-gallery]'), filterBar = document.querySelector('[data-filters]');
   flexGrid(gallery);
@@ -163,6 +167,58 @@
     };
     render(); attach(gallery, () => visible);
   }
+
+  /* ---------- hero carousel: every image and video in the portfolio, no item limit, loops forever ---------- */
+  function heroMedia() {
+    const out = [], seen = new Set();
+    const add = (kind, src) => { if (src && !seen.has(src)) { seen.add(src); out.push({ kind, src }); } };
+    const isFile = u => u && !youtubeId(u) && !/^https?:\/\/(www\.)?(youtu|vimeo)/i.test(u);
+    const yt = u => { const id = youtubeId(u); return id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : ''; };
+    sorted().forEach(p => {
+      if (p.thumbMode === 'none') return; /* projects set to "no thumbnail" stay out of the hero too */
+      if (p.type === 'video' && isFile(p.videoUrl)) add('video', p.videoUrl);
+      else if (p.thumbMode === 'custom' && p.thumb) add('image', p.thumb);
+      else if (p.media) add('image', p.media);
+      else add('image', yt(p.videoUrl));
+      p.extra.forEach(x => { if (x.kind === 'video') { if (isFile(x.src)) add('video', x.src); else add('image', x.poster || yt(x.src)); } else add('image', x.src); });
+    });
+    return out;
+  }
+  function heroCarousel(heroEl) {
+    const list = heroMedia(); if (!list.length) return;
+    const PERIOD = 3600, LEAVE = 1400; /* ms each item is on screen before the next one starts fading in / how long the old one takes to leave */
+    const box = document.createElement('div'); box.className = 'hero-carousel'; box.setAttribute('aria-hidden', 'true');
+    box.style.setProperty('--hc-life', (PERIOD + LEAVE + 400) / 1000 + 's');
+    const bad = new Set(), sleep = ms => new Promise(r => setTimeout(r, ms));
+    /* Slides are created on demand (current + next only) and resolve once their first frame is ready, so nothing fades in half-loaded and there is no cap on how many items the portfolio can hold. */
+    const make = m => new Promise(resolve => {
+      const slide = document.createElement('div'), el = document.createElement(m.kind === 'video' ? 'video' : 'img');
+      slide.className = 'hc-slide'; el.className = 'hc-media'; slide.append(el);
+      let done = false, timer;
+      const finish = ok => { if (done) return; done = true; clearTimeout(timer); if (ok) resolve(slide); else { slide.remove(); resolve(null); } };
+      timer = setTimeout(() => finish(false), 9000);
+      if (m.kind === 'video') { el.muted = true; el.loop = true; el.playsInline = true; el.preload = 'auto'; el.setAttribute('muted', ''); el.addEventListener('loadeddata', () => finish(true)); }
+      else { el.alt = ''; el.decoding = 'async'; el.addEventListener('load', () => finish(!(/ytimg\.com/.test(m.src) && el.naturalWidth <= 120))); }
+      el.addEventListener('error', () => finish(false));
+      box.append(slide); el.src = m.src;
+    });
+    const prepare = async from => { for (let k = 0; k < list.length; k++) { const i = (from + k) % list.length; if (bad.has(i)) continue; const slide = await make(list[i]); if (slide) return { i, slide }; bad.add(i); } return null; };
+    const show = slide => { slide.classList.add('live'); void slide.offsetWidth; slide.classList.add('in'); const v = slide.querySelector('video'); if (v) { v.currentTime = 0; v.play().catch(() => {}); } };
+    const leave = slide => { slide.classList.remove('in'); setTimeout(() => { const v = slide.querySelector('video'); if (v) v.pause(); slide.remove(); }, LEAVE); };
+    (async () => {
+      heroEl.prepend(box);
+      let cur = await prepare(0); if (!cur) { box.remove(); return; }
+      for (;;) {
+        show(cur.slide);
+        const upcoming = prepare((cur.i + 1) % list.length); /* the next item loads while this one plays */
+        await sleep(PERIOD);
+        while (document.hidden) await new Promise(r => addEventListener('visibilitychange', r, { once: true }));
+        const next = await upcoming; if (!next) return;
+        leave(cur.slide); cur = next;
+      }
+    })();
+  }
+  const heroForCarousel = document.querySelector('.hero'); if (heroForCarousel) heroCarousel(heroForCarousel);
 
   const social = document.querySelector('[data-socials]'); if (social) social.innerHTML = data.artist.socials.map(s => `<a href="${s.url}" target="_blank" rel="noreferrer">${s.label} ↗</a>`).join('');
   const hero = document.querySelector('.hero');
