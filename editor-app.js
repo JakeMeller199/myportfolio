@@ -21,7 +21,7 @@
   };
 
   /* ---------- constants ---------- */
-  const MAX_FAV = 4; /* the homepage "Selected Work" holds exactly this many favourites */
+  const MAX_FAV = 6; /* the homepage "Selected Work" holds exactly this many favourites */
   const PRESETS = [
     ['1920x1080', '1920 × 1080 — Full HD 16:9'],
     ['1280x720', '1280 × 720 — HD 16:9'],
@@ -81,7 +81,7 @@
   const open = new Set();        // uids whose card is expanded
   const pinned = new Set();      // uids kept visible while a filter is active (so an edit never makes a card vanish under you)
   const panelsOpen = new Set();  // settings panels left open
-  let view = 'all', query = '', pickTarget = null;
+  let view = 'all', query = '', pickTarget = null, screen = 'list', zoom = 60, dragUid = null;
 
   const byUid = uid => state.projects.find(p => p.uid === Number(uid));
   const renumber = () => state.projects.sort((a, b) => a.rank - b.rank).forEach((p, i) => { p.rank = i + 1; });
@@ -200,6 +200,15 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
 .extras{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:6px;margin-bottom:6px}.extra-row{display:grid;grid-template-columns:84px minmax(0,1fr) auto auto auto auto;gap:5px;align-items:center}.extra-row .poster{grid-column:2 / -1}
 .coll-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:6px}.coll-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto auto auto auto;gap:6px;align-items:center;background:#222;padding:6px 8px;border-left:4px solid #f4d21f}.coll-row input[type=number]{width:56px}.add-collection{display:flex;gap:7px;max-width:520px;margin-top:10px}
 .listhead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin:18px 0 6px}.listhead h2{margin:0;font-size:24px}.empty{color:#9d9791;padding:30px 0}
+.seg button.on{background:#e8272e}.gridmode #search,.gridmode .views,.gridmode [data-expand-all],.gridmode [data-collapse-all]{display:none}
+.zoombar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:6px 0 14px}.zoombar input{width:200px;padding:0}
+.gridpreview{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;background:#0a0a0b;padding:18px;border:1px dashed #3a3939}
+.gcard{flex:0 0 auto;cursor:grab;position:relative;transition:opacity .15s}.gcard.dragging{opacity:.35}.gcard.before:before,.gcard.after:after{content:'';position:absolute;top:0;bottom:0;width:5px;background:#f4d21f;z-index:3}.gcard.before:before{left:-11px}.gcard.after:after{right:-11px}
+.gmedia{position:relative;overflow:hidden;min-height:56px;background:#090707;box-shadow:5px 6px 0 #000a}.gmedia img,.gmedia video{display:block;width:100%;height:auto;pointer-events:none}.gmedia .no-preview{padding:34px 8px;pointer-events:none}.gcard.fav .gmedia{outline:3px solid #f4d21f}
+.gnum{position:absolute;left:6px;top:6px;background:#000c;padding:3px 7px;font-size:11px;font-weight:bold}.gstar{position:absolute;right:6px;top:6px;background:#f4d21f;color:#111;padding:3px 7px;font-size:11px;font-weight:bold}
+.gmove{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:6px;opacity:0;transition:opacity .15s}.gcard:hover .gmove,.gcard:focus-within .gmove{opacity:1}.gmove button{padding:6px 9px;background:#000c}
+.gmeta{display:flex;justify-content:space-between;gap:8px;background:#000a;padding:6px 8px;font-size:12px}.gmeta span{color:#9d9791}
+@media(hover:none){.gmove{opacity:1}}
 .fab{position:fixed;right:22px;bottom:84px;z-index:9;width:58px;height:58px;border-radius:50%;font-size:34px;line-height:1;padding:0 0 4px;box-shadow:0 6px 18px #000a,0 0 0 3px #101011}.fab:hover{filter:brightness(1.15);transform:scale(1.05)}
 .sticky{position:fixed;z-index:7;bottom:0;left:0;right:0;background:#101011ee;border-top:1px solid #555;padding:12px max(16px,calc((100vw - 1240px)/2 + 16px));display:flex;justify-content:space-between;gap:12px;align-items:center}.status{color:#f4d21f;font-size:12px}
 @media(max-width:1000px){.c1,.c2,.c3,.c4{grid-column:span 6}.c5,.c6,.c8{grid-column:span 12}.pbody{grid-template-columns:1fr}.preview{order:-1;max-width:300px}}
@@ -217,7 +226,39 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
 
   function viewName() { return view === 'all' ? 'All work' : view === 'fav' ? 'Selected Work (homepage)' : view === 'none' ? 'No collection' : collTitle(view.slice(2)); }
 
+  /* ---------- grid screen: preview the Work page layout and drag cards into order ---------- */
+  function gridCard(p) {
+    const w = Math.round(state.layout.cardWidth * p.scale / 100 * zoom / 100);
+    const thumb = previewHTML(p).replace(' controls', '').replace('<img ', '<img draggable="false" ');
+    return `<div class="gcard ${p.featured ? 'fav' : ''}" draggable="true" data-uid="${p.uid}" style="width:${w}px;max-width:100%">
+      <div class="gmedia">${thumb}<span class="gnum">${p.rank}</span>${p.featured ? '<span class="gstar">★ Selected</span>' : ''}<span class="gmove"><button data-gmove="-1" title="Move earlier">◀</button><button data-gmove="1" title="Move later">▶</button></span></div>
+      <div class="gmeta"><b>${esc(p.title || 'Untitled')}</b><span>${esc(p.year || '')}</span></div></div>`;
+  }
+  function renderGrid() {
+    const scroll = scrollY, list = [...state.projects].sort((a, b) => a.rank - b.rank);
+    $('#app').innerHTML = `<main class="wrap"><div class="listhead"><h2>Grid layout</h2><span class="muted">${list.length} posts · drag a card to a new spot (or use ◀ ▶). The order here is the Work page order. Sizes use each post's Size % × the base width.</span></div>
+      <div class="zoombar"><label>Preview size <input type="range" id="zoom" min="30" max="120" step="5" value="${zoom}"> <b id="zoomv">${zoom}%</b></label><span class="muted">★ gold = shown in the homepage Selected Work</span></div>
+      <div class="gridpreview" id="gridpreview">${list.map(gridCard).join('') || '<p class="empty">No work yet.</p>'}</div></main><input id="picker" type="file" hidden>`;
+    scrollTo(0, scroll);
+  }
+  function moveTo(uid, targetUid, after) {
+    const list = [...state.projects].sort((a, b) => a.rank - b.rank), p = list.find(x => x.uid === uid);
+    if (!p || uid === targetUid) return;
+    list.splice(list.indexOf(p), 1);
+    const t = list.findIndex(x => x.uid === targetUid); list.splice(t + (after ? 1 : 0), 0, p);
+    list.forEach((x, i) => { x.rank = i + 1; }); state.projects = list;
+    renderGrid(); status(`Moved "${p.title}" to position ${p.rank}. Export when ready.`);
+  }
+
+  function setScreen(next) {
+    sync(); screen = next;
+    $('#top').classList.toggle('gridmode', screen === 'grid'); $('.fab').hidden = screen === 'grid';
+    $$('[data-screen]').forEach(b => b.classList.toggle('on', b.dataset.screen === screen));
+    render(false); scrollTo(0, 0);
+  }
+
   function render(keepScroll = true) {
+    if (screen === 'grid') { renderGrid(); return; }
     const scroll = scrollY;
     renumber(); renumberCollections();
     if (view.startsWith('c:') && !state.collections.some(c => c.id === view.slice(2))) view = 'all';
@@ -280,7 +321,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     const p = newProject({ title: uniqueName('New Work'), collectionIds: inCollection ? [inCollection] : [] });
     p.id = uniqueId(p.title);
     let note = '';
-    if (view === 'fav') { if (favCount() < MAX_FAV) p.featured = true; else { view = 'all'; note = ' (all 4 favorite slots are used, so it was added as a regular post)'; } }
+    if (view === 'fav') { if (favCount() < MAX_FAV) p.featured = true; else { view = 'all'; note = ` (all ${MAX_FAV} favorite slots are used, so it was added as a regular post)`; } }
     state.projects.push(p); open.add(p.uid); pinned.add(p.uid); query = ''; $('#search').value = '';
     reveal(p); status(`Added "${p.title}"${inCollection ? ` to ${collTitle(inCollection)}` : ''}${note}. Fill it in below.`);
   }
@@ -297,6 +338,9 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     const t = e.target, project = t.closest('.project'), p = project ? byUid(project.dataset.uid) : null;
     if (p) pinned.add(p.uid);
 
+    const scr = t.closest('[data-screen]'); if (scr) { setScreen(scr.dataset.screen); return; }
+    const gm = t.closest('[data-gmove]');
+    if (gm) { const card = gm.closest('.gcard'), list = [...state.projects].sort((a, b) => a.rank - b.rank), i = list.findIndex(x => x.uid === Number(card.dataset.uid)), q = list[i + Number(gm.dataset.gmove)]; if (q) moveTo(list[i].uid, q.uid, Number(gm.dataset.gmove) > 0); return; }
     const pillBtn = t.closest('[data-view]');
     if (pillBtn) { sync(); view = pillBtn.dataset.view; pinned.clear(); render(); const y = $('#listhead').getBoundingClientRect().top + scrollY - $('#top').offsetHeight - 8; if (scrollY > y) scrollTo(0, y); return; }
     if (t.closest('[data-new]')) { addProject(); return; }
@@ -373,6 +417,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
 
   document.addEventListener('input', e => {
     const t = e.target;
+    if (t.id === 'zoom') { zoom = Number(t.value); $('#zoomv').textContent = zoom + '%'; renderGrid(); return; }
     if (t.id === 'search') { query = t.value.trim(); pinned.clear(); sync(); render(); const s = $('#search'); return; }
     if (!t.closest('main')) return;
     sync(); status('Edited — export when ready.');
@@ -415,6 +460,17 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     if (t.matches('[data-key]')) { sync(); refreshCard(card); }
   });
 
+  /* drag and drop in the grid screen */
+  const clearDrop = () => $$('.gcard.before,.gcard.after,.gcard.dragging').forEach(c => c.classList.remove('before', 'after', 'dragging'));
+  document.addEventListener('dragstart', e => { const c = e.target.closest?.('.gcard'); if (!c) return; dragUid = Number(c.dataset.uid); c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(dragUid)); });
+  document.addEventListener('dragover', e => {
+    const c = e.target.closest?.('.gcard'); if (!c || dragUid == null) return; e.preventDefault();
+    const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+    $$('.gcard.before,.gcard.after').forEach(x => x.classList.remove('before', 'after')); if (Number(c.dataset.uid) !== dragUid) c.classList.add(after ? 'after' : 'before');
+  });
+  document.addEventListener('drop', e => { const c = e.target.closest?.('.gcard'); if (!c || dragUid == null) return; e.preventDefault(); const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2, id = dragUid; dragUid = null; clearDrop(); moveTo(id, Number(c.dataset.uid), after); });
+  document.addEventListener('dragend', () => { dragUid = null; clearDrop(); });
+
   /* remember which settings panels are open (the toggle event does not bubble) */
   document.addEventListener('toggle', e => { const d = e.target.closest?.('[data-panel]'); if (d) { if (d.open) panelsOpen.add(d.dataset.panel); else panelsOpen.delete(d.dataset.panel); } }, true);
 
@@ -422,7 +478,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
   function mountChrome() {
     const style = document.createElement('style'); style.textContent = STYLE; document.head.append(style);
     const top = document.createElement('div'); top.id = 'top'; top.className = 'topbar';
-    top.innerHTML = `<div class="toprow"><h1>CONTENT // CONTROL</h1><input id="search" type="search" placeholder="Search work…" aria-label="Search work"><span class="buttons"><button class="ghost" data-expand-all>Expand all</button><button class="ghost" data-collapse-all>Collapse all</button></span></div><div class="views" id="views" aria-label="Collections"></div>`;
+    top.innerHTML = `<div class="toprow"><h1>CONTENT // CONTROL</h1><span class="buttons seg"><button class="ghost on" data-screen="list">Edit list</button><button class="ghost" data-screen="grid">Grid layout</button></span><input id="search" type="search" placeholder="Search work…" aria-label="Search work"><span class="buttons"><button class="ghost" data-expand-all>Expand all</button><button class="ghost" data-collapse-all>Collapse all</button></span></div><div class="views" id="views" aria-label="Collections"></div>`;
     document.body.prepend(top);
     const fab = document.createElement('button'); fab.className = 'fab'; fab.setAttribute('data-new', ''); fab.setAttribute('aria-label', 'New work'); fab.title = 'New work (added to the selected collection)'; fab.textContent = '+';
     document.body.append(fab);

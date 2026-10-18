@@ -76,7 +76,7 @@
 /* Hero carousel slides: fade in on top, old one fades out underneath, media drifts right-to-left the whole time it is on screen */
 .hc-slide{position:absolute;inset:0;overflow:hidden;opacity:0;transition:opacity .6s ease .5s;will-change:opacity}
 .hc-slide.in{opacity:1;transition:opacity 1.2s ease-out}
-.hc-media{position:absolute;top:0;left:0;width:114%;height:100%;object-fit:cover;filter:saturate(.92) brightness(.84);will-change:transform;transform:translate3d(0,0,0)}
+.hc-media{position:absolute;top:0;left:0;width:138%;height:100%;object-fit:cover;filter:saturate(.92) brightness(.84);will-change:transform;transform:translate3d(0,0,0)}
 .hc-slide.live .hc-media{animation:hc-drift var(--hc-life,5.4s) linear forwards}
-@keyframes hc-drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-12.28%,0,0)}}
+@keyframes hc-drift{from{transform:translate3d(4%,0,0)}to{transform:translate3d(-27.5%,0,0)}}
 @media(prefers-reduced-motion:reduce){.hc-slide.live .hc-media{animation:none}.hc-media{width:100%}}

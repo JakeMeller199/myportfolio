@@ -26,8 +26,8 @@
   });
   /* favourites: the homepage shows exactly the posts flagged `featured` (max 4). Older data without any flags defaults to the first 4 by rank. */
   const ranked = [...data.projects].sort((a, b) => a.rank - b.rank);
-  if (!data.projects.some(p => typeof p.featured === 'boolean')) ranked.slice(0, 4).forEach(p => { p.featured = true; });
-  let favCount = 0; ranked.forEach(p => { p.featured = p.featured === true && favCount < 4; if (p.featured) favCount++; });
+  if (!data.projects.some(p => typeof p.featured === 'boolean')) ranked.slice(0, 6).forEach(p => { p.featured = true; });
+  let favCount = 0; ranked.forEach(p => { p.featured = p.featured === true && favCount < 6; if (p.featured) favCount++; });
   const collection = id => data.collections.find(c => c.id === id) || { id, title: title(id) };
 
   /* ---------- slides: main media first, then the carousel extras ---------- */
@@ -142,7 +142,7 @@
     const collections = [...data.collections.map(c => c.id).filter(id => used.has(id)), ...[...used].filter(id => !data.collections.some(c => c.id === id))];
     if (filterBar) {
       filterBar.innerHTML = `<button class="filter active" data-filter="all">Everything</button>`
-        + (collections.length ? `<span class="filter-divider">Collections</span>${collections.map(id => `<button class="filter collection-filter" data-filter="collection:${id}">${collection(id).title}</button>`).join('')}` : '')
+        + ((collections.length || data.projects.some(p => p.featured)) ? `<span class="filter-divider">Collections</span>${data.projects.some(p => p.featured) ? '<button class="filter collection-filter" data-filter="collection:__showcase">Showcase</button>' : ''}${collections.map(id => `<button class="filter collection-filter" data-filter="collection:${id}">${collection(id).title}</button>`).join('')}` : '')
         + (tags.length ? `<span class="filter-divider">Filter</span><select class="filter-select" data-tag-select aria-label="Filter by tag"><option value="">All tags</option>${tags.map(t => `<option value="tag:${t}">${tagLabel[t] || title(t)}</option>`).join('')}</select>` : '');
       const select = filterBar.querySelector('[data-tag-select]');
       const refresh = () => {
@@ -160,7 +160,7 @@
     }
     const render = () => {
       const y = scrollY, h = gallery.offsetHeight;
-      visible = sorted().filter(p => (col === 'all' || p.collectionIds.includes(col)) && (!tag || p.tags.includes(tag)));
+      visible = sorted().filter(p => (col === 'all' || (col === '__showcase' ? p.featured : p.collectionIds.includes(col))) && (!tag || p.tags.includes(tag)));
       gallery.style.minHeight = h + 'px'; /* hold the page height while images reload so the scroll position stays put */
       gallery.innerHTML = visible.length ? visible.map(card).join('') : '<p class="empty-note">Nothing matches this collection and filter yet.</p>';
       scrollTo(0, y); setTimeout(() => { gallery.style.minHeight = ''; }, 700);
@@ -180,7 +180,6 @@
       else if (p.thumbMode === 'custom' && p.thumb) add('image', p.thumb);
       else if (p.media) add('image', p.media);
       else add('image', yt(p.videoUrl));
-      p.extra.forEach(x => { if (x.kind === 'video') { if (isFile(x.src)) add('video', x.src); else add('image', x.poster || yt(x.src)); } else add('image', x.src); });
     });
     return out;
   }
