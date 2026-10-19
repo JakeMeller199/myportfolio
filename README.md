@@ -1,4 +1,4 @@
-# NOVA//VOID portfolio
+portfolio
 
 A no-build static portfolio made for GitHub Pages. Upload the whole repository; do not upload `editor.html` if you do not want the local editor public.
 
