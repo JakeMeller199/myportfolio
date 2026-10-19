@@ -152,7 +152,7 @@ window.PORTFOLIO_CONTENT = {
       "extra": [],
       "thumbMode": "auto",
       "thumb": "",
-      "featured": true
+      "featured": false
     },
     {
       "id": "hyperpop-1",
@@ -440,7 +440,7 @@ window.PORTFOLIO_CONTENT = {
       "extra": [],
       "thumbMode": "auto",
       "thumb": "",
-      "featured": false
+      "featured": true
     },
     {
       "id": "cryptblackplanet2",
