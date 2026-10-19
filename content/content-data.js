@@ -920,7 +920,7 @@ window.PORTFOLIO_CONTENT = {
       "collectionIds": [
         "muc"
       ],
-      "description": "",
+      "description": "Example of live VJ visuals for MUC. Any performance dips are caused by recording the footage, not the live event.",
       "credits": "",
       "media": "",
       "videoUrl": "https://youtu.be/Gc2953gTM1g",
@@ -948,7 +948,7 @@ window.PORTFOLIO_CONTENT = {
       "collectionIds": [
         "moshrooms"
       ],
-      "description": "",
+      "description": "Example of live VJ visuals for Moshrooms. Any performance dips are caused by recording the footage, not the live event.",
       "credits": "",
       "media": "",
       "videoUrl": "https://youtu.be/ZCGu0I1rLnk",
@@ -976,7 +976,7 @@ window.PORTFOLIO_CONTENT = {
       "collectionIds": [
         "the-crypt-black-planet"
       ],
-      "description": "",
+      "description": "Example of live VJ visuals for The Crypt. Any performance dips are caused by recording the footage, not the live event.",
       "credits": "",
       "media": "",
       "videoUrl": "https://youtu.be/LUBhEWgob_4",

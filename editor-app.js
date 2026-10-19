@@ -59,7 +59,7 @@
         uid: ++uidCounter,
         id: slug(p.id) || `project-${i + 1}`,
         rank: Number(p.rank) || i + 1,
-        type: p.type === 'video' ? 'video' : 'image',
+        type: p.type === 'video' || (p.videoUrl && !p.media) ? 'video' : 'image',
         resolution: cleanRes(p.resolution),
         fit: cleanFit(p.fit),
         scale: clampScale(p.scale),
@@ -503,6 +503,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     if (t.matches('[data-extra-kind]')) { sync(); render(); return; }
     if (t.matches('[data-key="rank"]')) { sync(); const wanted = p.rank; state.projects = state.projects.filter(x => x !== p); state.projects.sort((a, b) => a.rank - b.rank); state.projects.splice(Math.min(Math.max(wanted, 1), state.projects.length + 1) - 1, 0, p); renumber(); render(); return; }
     if (t.matches('[data-key="type"],[data-key="thumbMode"],[data-collection],[data-key="year"]')) { sync(); render(); return; }
+    if (t.matches('[data-key="videoUrl"]') && t.value.trim() && p.type !== 'video' && !p.media) { sync(); p.type = 'video'; render(); status('Media kind switched to Video because a video link was added.'); return; }
     if (t.matches('[data-key="media"],[data-key="videoUrl"],[data-key="thumb"]')) { sync(); previews.delete(`${p.uid}:${t.dataset.key}`); refreshCard(card); return; }
     if (t.matches('[data-key="title"]')) { sync(); render(); return; }
     if (t.matches('[data-key]')) { sync(); refreshCard(card); }

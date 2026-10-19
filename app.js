@@ -20,6 +20,7 @@
     p.media = publicPath(p.media); p.videoUrl = publicPath(p.videoUrl);
     p.thumbMode = ['auto', 'custom', 'none'].includes(p.thumbMode) ? p.thumbMode : 'auto'; p.thumb = publicPath(p.thumb || '');
     p.extra = (p.extra || []).filter(x => x && x.src).map(x => ({ kind: x.kind === 'video' ? 'video' : 'image', src: publicPath(x.src), poster: publicPath(x.poster || '') }));
+    if (p.type !== 'video' && p.videoUrl && !p.media) p.type = 'video'; /* a post with a video link and no image is a video, whatever its kind says */
     p.credits = String(p.credits || '').trim();
     p.tags = [...new Set((p.tags || []).map(slug).filter(Boolean))];
     p.collectionIds = [...new Set((p.collectionIds || (p.collection ? [p.collection] : [])).map(slug).filter(Boolean))];
@@ -68,7 +69,7 @@
   }
 
   /* ---------- modal with carousel + project-to-project navigation ---------- */
-  const nav = { list: [], pi: 0, si: 0 };
+  const nav = { list: [], pi: 0, si: 0, vol: 0.2 };
   let touchX = null;
   function modal() {
     if (document.querySelector('.modal')) return;
@@ -112,6 +113,7 @@
     if (v) {
       const note = t => { if (!v.parentNode.querySelector('.audio-note')) v.insertAdjacentHTML('afterend', `<p class="audio-note">${t}</p>`); };
       v.querySelector('source').addEventListener('error', () => note('This video file could not be decoded by the browser. Re-export it as an H.264 + AAC .mp4 and point the project at the new file.'));
+      v.volume = nav.vol; v.addEventListener('volumechange', () => { if (!v.muted) nav.vol = v.volume; }); /* files start at 20% (not muted); the viewer's own changes are remembered */
       v.play().catch(() => {});
       setTimeout(() => { const silent = v.webkitAudioDecodedByteCount === 0 || v.mozHasAudio === false; if (v.isConnected && v.readyState >= 3 && v.currentTime > .8 && !v.paused && !v.muted && silent) note('No playable audio track was found in this file. If it should have sound, re-export it as an H.264 + AAC .mp4.'); }, 2200);
     }
