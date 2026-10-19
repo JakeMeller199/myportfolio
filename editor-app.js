@@ -49,7 +49,7 @@
     return projects;
   };
   const normalize = data => ({
-    layout: { cardWidth: clampBase(data.layout?.cardWidth) },
+    layout: { cardWidth: clampBase(data.layout?.cardWidth), sortMode: data.layout?.sortMode === 'manual' ? 'manual' : 'collections' },
     artist: { ...(data.artist || {}), socials: (data.artist?.socials || []).filter(s => s.label?.toLowerCase() !== 'vimeo') },
     collections: (data.collections || []).map((c, i) => ({ id: slug(c.id || c.title), title: c.title || title(c.id), description: c.description || '', rank: Number(c.rank) || i + 1 })).sort((a, b) => a.rank - b.rank),
     projects: applyFeatured((data.projects || []).map((p, i) => {
@@ -81,7 +81,7 @@
   const open = new Set();        // uids whose card is expanded
   const pinned = new Set();      // uids kept visible while a filter is active (so an edit never makes a card vanish under you)
   const panelsOpen = new Set();  // settings panels left open
-  let view = 'all', query = '', pickTarget = null, screen = 'list', zoom = 60, dragUid = null;
+  let view = 'all', query = '', pickTarget = null, screen = 'list', zoom = 60, dragUid = null, dragCid = null;
 
   const byUid = uid => state.projects.find(p => p.uid === Number(uid));
   const renumber = () => state.projects.sort((a, b) => a.rank - b.rank).forEach((p, i) => { p.rank = i + 1; });
@@ -208,7 +208,15 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
 .gnum{position:absolute;left:6px;top:6px;background:#000c;padding:3px 7px;font-size:11px;font-weight:bold}.gstar{position:absolute;right:6px;top:6px;background:#f4d21f;color:#111;padding:3px 7px;font-size:11px;font-weight:bold}
 .gmove{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:6px;opacity:0;transition:opacity .15s}.gcard:hover .gmove,.gcard:focus-within .gmove{opacity:1}.gmove button{padding:6px 9px;background:#000c}
 .gmeta{display:flex;justify-content:space-between;gap:8px;background:#000a;padding:6px 8px;font-size:12px}.gmeta span{color:#9d9791}
+@media(max-width:620px){.sortbtn{width:100%}}
 @media(hover:none){.gmove{opacity:1}}
+.sortbtn.on{background:#1f6f4a}.sortbtn{white-space:nowrap}
+.cstack{display:flex;flex-direction:column;gap:6px}.cblock{position:relative;padding:4px 0 6px;transition:opacity .15s}.cblock.dragging{opacity:.4}
+.cblock.before:before,.cblock.after:after{content:'';position:absolute;left:0;right:0;height:5px;background:#f4d21f;z-index:3}.cblock.before:before{top:-6px}.cblock.after:after{bottom:-6px}
+.chead{display:flex;align-items:baseline;gap:14px;padding-top:16px;margin-top:14px;background:linear-gradient(to right,#f5f1e94d,#f5f1e90a 85%) top left/100% 1px no-repeat}.cblock:first-child .chead{margin-top:0}
+.cblock:not(.fixed) .chead{cursor:grab}.cgrip{color:#8f8a86;font-size:18px}.ctitle{display:inline-flex;align-items:center;gap:12px;font:22px Impact,'Arial Black',sans-serif;letter-spacing:.04em;text-transform:uppercase}.ctitle:before{content:'';width:9px;height:9px;background:#e8272e}.ccount{font-size:11px;letter-spacing:.14em;color:#f5f1e980}
+.chead .buttons button{padding:5px 9px}.cend{height:1px;margin-top:10px;background:linear-gradient(to right,#f5f1e90a,#f5f1e933)}.cempty{padding:10px 4px}
+.gridpreview.locked{background:transparent;border:0;padding:12px 0 0}.gridpreview.locked .gcard{cursor:default;opacity:.34;filter:grayscale(1);pointer-events:none}.gridpreview.locked .gcard.fav .gmedia{outline-color:#f4d21f88}
 .fab{position:fixed;right:22px;bottom:84px;z-index:9;width:58px;height:58px;border-radius:50%;font-size:34px;line-height:1;padding:0 0 4px;box-shadow:0 6px 18px #000a,0 0 0 3px #101011}.fab:hover{filter:brightness(1.15);transform:scale(1.05)}
 .sticky{position:fixed;z-index:7;bottom:0;left:0;right:0;background:#101011ee;border-top:1px solid #555;padding:12px max(16px,calc((100vw - 1240px)/2 + 16px));display:flex;justify-content:space-between;gap:12px;align-items:center}.status{color:#f4d21f;font-size:12px}
 @media(max-width:1000px){.c1,.c2,.c3,.c4{grid-column:span 6}.c5,.c6,.c8{grid-column:span 12}.pbody{grid-template-columns:1fr}.preview{order:-1;max-width:300px}}
@@ -227,18 +235,54 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
   function viewName() { return view === 'all' ? 'All work' : view === 'fav' ? 'Selected Work (homepage)' : view === 'none' ? 'No collection' : collTitle(view.slice(2)); }
 
   /* ---------- grid screen: preview the Work page layout and drag cards into order ---------- */
-  function gridCard(p) {
+  function gridCard(p, locked) {
     const w = Math.round(state.layout.cardWidth * p.scale / 100 * zoom / 100);
     const thumb = previewHTML(p).replace(' controls', '').replace('<img ', '<img draggable="false" ');
-    return `<div class="gcard ${p.featured ? 'fav' : ''}" draggable="true" data-uid="${p.uid}" style="width:${w}px;max-width:100%">
-      <div class="gmedia">${thumb}<span class="gnum">${p.rank}</span>${p.featured ? '<span class="gstar">★ Selected</span>' : ''}<span class="gmove"><button data-gmove="-1" title="Move earlier">◀</button><button data-gmove="1" title="Move later">▶</button></span></div>
+    return `<div class="gcard ${p.featured ? 'fav' : ''}" ${locked ? '' : 'draggable="true"'} data-uid="${p.uid}" style="width:${w}px;max-width:100%">
+      <div class="gmedia">${thumb}<span class="gnum">${p.rank}</span>${p.featured ? '<span class="gstar">★ Selected</span>' : ''}${locked ? '' : '<span class="gmove"><button data-gmove="-1" title="Move earlier">◀</button><button data-gmove="1" title="Move later">▶</button></span>'}</div>
       <div class="gmeta"><b>${esc(p.title || 'Untitled')}</b><span>${esc(p.year || '')}</span></div></div>`;
   }
+  /* Work-page order when "Sort by collections" is on: each post sits under its first collection (collection rank order), unassigned work last */
+  const byCollections = () => state.layout.sortMode !== 'manual';
+  function groupOrder() {
+    const known = state.collections.map(c => c.id), extra = [...new Set(state.projects.flatMap(p => p.collectionIds))].filter(id => !known.includes(id)), order = [...known, ...extra], buckets = new Map([...order, ''].map(id => [id, []]));
+    [...state.projects].sort((a, b) => a.rank - b.rank).forEach(p => buckets.get(order.find(k => p.collectionIds.includes(k)) || '').push(p));
+    return [...order, ''].map(id => ({ id, title: id ? collTitle(id) : 'More work', posts: buckets.get(id), fixed: !known.includes(id) }));
+  }
+  function blockHTML(g, i, all) {
+    const movable = !g.fixed, n = g.posts.length;
+    return `<section class="cblock ${movable ? '' : 'fixed'}" data-cid="${esc(g.id)}" ${movable ? 'draggable="true"' : ''}>
+      <header class="chead">${movable ? '<span class="cgrip" title="Drag to reorder this collection">⠿</span>' : ''}<span class="ctitle">${esc(g.title)}</span><span class="ccount">${String(n).padStart(2, '0')}</span><span class="grow"></span>${movable ? `<span class="buttons"><button class="ghost" data-cmove="-1" title="Move collection up" ${i === 0 ? 'disabled' : ''}>▲</button><button class="ghost" data-cmove="1" title="Move collection down" ${all[i + 1] && !all[i + 1].fixed ? '' : 'disabled'}>▼</button></span>` : ''}</header>
+      <div class="gridpreview locked">${g.posts.map(p => gridCard(p, true)).join('') || '<span class="muted cempty">No posts in this collection yet</span>'}</div><div class="cend"></div></section>`;
+  }
+  function renderCollectionGrid() {
+    const scroll = scrollY, groups = groupOrder().filter(g => g.posts.length || !g.fixed), movable = groups.filter(g => !g.fixed);
+    $('#app').innerHTML = `<main class="wrap"><div class="listhead"><h2>Grid layout · by collection</h2><span class="muted">${movable.length} collections · drag a collection (or use ▲ ▼) to reorder it. This is the order on the Work page and in the Collections list. Posts are locked here — turn off “Sort by collections” to move individual posts.</span></div>
+      <div class="zoombar"><label>Preview size <input type="range" id="zoom" min="30" max="120" step="5" value="${zoom}"> <b id="zoomv">${zoom}%</b></label><span class="muted">Posts inside a collection follow their rank.</span></div>
+      <div class="cstack">${groups.map((g, i) => blockHTML(g, i, groups)).join('') || '<p class="empty">No work yet.</p>'}</div></main><input id="picker" type="file" hidden>`;
+    scrollTo(0, scroll);
+  }
+  function moveColl(cid, targetCid, after) {
+    if (cid === targetCid) return;
+    const list = state.collections, c = list.find(x => x.id === cid); if (!c) return;
+    list.splice(list.indexOf(c), 1);
+    const t = list.findIndex(x => x.id === targetCid); list.splice(t < 0 ? list.length : t + (after ? 1 : 0), 0, c);
+    renumberCollections(); renderCollectionGrid(); status(`Moved collection "${c.title}" to position ${c.rank}. Export when ready.`);
+  }
+  function setSortMode(on) {
+    sync();
+    if (!on && byCollections()) groupOrder().flatMap(g => g.posts).forEach((p, i) => { p.rank = i + 1; }); /* keep the page exactly as it looked, then let each post be moved */
+    state.layout.sortMode = on ? 'collections' : 'manual';
+    const b = $('[data-sortmode]'); if (b) { b.classList.toggle('on', on); b.textContent = `Sort by collections: ${on ? 'ON' : 'OFF'}`; }
+    render(false); status(on ? 'Work page is grouped by collection. Drag collections in Grid layout to reorder them.' : 'Manual sorting: the Work page follows each post’s own order.');
+  }
+
   function renderGrid() {
+    if (byCollections()) { renderCollectionGrid(); return; }
     const scroll = scrollY, list = [...state.projects].sort((a, b) => a.rank - b.rank);
-    $('#app').innerHTML = `<main class="wrap"><div class="listhead"><h2>Grid layout</h2><span class="muted">${list.length} posts · drag a card to a new spot (or use ◀ ▶). The order here is the Work page order. Sizes use each post's Size % × the base width.</span></div>
+    $('#app').innerHTML = `<main class="wrap"><div class="listhead"><h2>Grid layout</h2><span class="muted">${list.length} posts · manual sorting is on — drag a card to a new spot (or use ◀ ▶). This is the Work page order, with no collection sections. Sizes use each post's Size % × the base width.</span></div>
       <div class="zoombar"><label>Preview size <input type="range" id="zoom" min="30" max="120" step="5" value="${zoom}"> <b id="zoomv">${zoom}%</b></label><span class="muted">★ gold = shown in the homepage Selected Work</span></div>
-      <div class="gridpreview" id="gridpreview">${list.map(gridCard).join('') || '<p class="empty">No work yet.</p>'}</div></main><input id="picker" type="file" hidden>`;
+      <div class="gridpreview" id="gridpreview">${list.map(p => gridCard(p)).join('') || '<p class="empty">No work yet.</p>'}</div></main><input id="picker" type="file" hidden>`;
     scrollTo(0, scroll);
   }
   function moveTo(uid, targetUid, after) {
@@ -258,6 +302,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
   }
 
   function render(keepScroll = true) {
+    const sb = $('[data-sortmode]'); if (sb) { sb.classList.toggle('on', byCollections()); sb.textContent = `Sort by collections: ${byCollections() ? 'ON' : 'OFF'}`; }
     if (screen === 'grid') { renderGrid(); return; }
     const scroll = scrollY;
     renumber(); renumberCollections();
@@ -265,7 +310,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     const a = state.artist, social = name => a.socials?.find(s => s.label === name)?.url || '';
     const usage = id => state.projects.filter(p => p.collectionIds.includes(id)).length;
     const list = visibleProjects();
-    const hint = view.startsWith('c:') ? 'New work you add here is placed in this collection.' : view === 'fav' ? 'These appear on the homepage, in rank order.' : '';
+    const hint = byCollections() && view === 'all' ? 'The Work page groups posts by collection; order inside a collection follows rank.' : view.startsWith('c:') ? 'New work you add here is placed in this collection.' : view === 'fav' ? 'These appear on the homepage, in rank order.' : '';
     renderViews();
     $('#app').innerHTML = `<main class="wrap">
       ${panel('artist', 'Artist information', esc(a.name || ''), `<div class="pgrid" data-artist-section>${cell('c3', 'Name', input('name', a.name || ''))}${cell('c3', 'Email', input('email', a.email || '', 'email'))}${cell('c3', 'Instagram URL', input('instagram', social('Instagram')))}${cell('c3', 'YouTube URL', input('youtube', social('YouTube')))}${cell('c6', 'Role / strapline', input('role', a.role || ''))}${cell('c6', 'Biography', area('bio', a.bio || ''))}</div>`)}
@@ -339,6 +384,9 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     if (p) pinned.add(p.uid);
 
     const scr = t.closest('[data-screen]'); if (scr) { setScreen(scr.dataset.screen); return; }
+    if (t.closest('[data-sortmode]')) { setSortMode(!byCollections()); return; }
+    const cm = t.closest('[data-cmove]');
+    if (cm) { const groups = groupOrder().filter(g => g.posts.length || !g.fixed), cid = cm.closest('.cblock').dataset.cid, i = groups.findIndex(g => g.id === cid), q = groups[i + Number(cm.dataset.cmove)]; if (q && !q.fixed) moveColl(cid, q.id, Number(cm.dataset.cmove) > 0); return; }
     const gm = t.closest('[data-gmove]');
     if (gm) { const card = gm.closest('.gcard'), list = [...state.projects].sort((a, b) => a.rank - b.rank), i = list.findIndex(x => x.uid === Number(card.dataset.uid)), q = list[i + Number(gm.dataset.gmove)]; if (q) moveTo(list[i].uid, q.uid, Number(gm.dataset.gmove) > 0); return; }
     const pillBtn = t.closest('[data-view]');
@@ -462,14 +510,18 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
 
   /* drag and drop in the grid screen */
   const clearDrop = () => $$('.gcard.before,.gcard.after,.gcard.dragging').forEach(c => c.classList.remove('before', 'after', 'dragging'));
-  document.addEventListener('dragstart', e => { const c = e.target.closest?.('.gcard'); if (!c) return; dragUid = Number(c.dataset.uid); c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(dragUid)); });
+  const clearBlocks = () => $$('.cblock.before,.cblock.after,.cblock.dragging').forEach(c => c.classList.remove('before', 'after', 'dragging'));
+  document.addEventListener('dragstart', e => { const b = e.target.closest?.('.cblock'); if (b) { if (!b.draggable) return; dragCid = b.dataset.cid; b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragCid); return; } const c = e.target.closest?.('.gcard'); if (!c) return; dragUid = Number(c.dataset.uid); c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(dragUid)); });
   document.addEventListener('dragover', e => {
+    if (dragCid != null) { const b = e.target.closest?.('.cblock'); if (!b) return; e.preventDefault(); const r = b.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2; clearBlocks(); document.querySelector(`.cblock[data-cid="${CSS.escape(dragCid)}"]`)?.classList.add('dragging'); if (b.dataset.cid !== dragCid && (!b.classList.contains('fixed') || !after)) b.classList.add(after ? 'after' : 'before'); return; }
     const c = e.target.closest?.('.gcard'); if (!c || dragUid == null) return; e.preventDefault();
     const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
     $$('.gcard.before,.gcard.after').forEach(x => x.classList.remove('before', 'after')); if (Number(c.dataset.uid) !== dragUid) c.classList.add(after ? 'after' : 'before');
   });
-  document.addEventListener('drop', e => { const c = e.target.closest?.('.gcard'); if (!c || dragUid == null) return; e.preventDefault(); const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2, id = dragUid; dragUid = null; clearDrop(); moveTo(id, Number(c.dataset.uid), after); });
-  document.addEventListener('dragend', () => { dragUid = null; clearDrop(); });
+  document.addEventListener('drop', e => {
+    if (dragCid != null) { const b = e.target.closest?.('.cblock'); if (!b) return; e.preventDefault(); const r = b.getBoundingClientRect(), id = dragCid, fixed = b.classList.contains('fixed'), after = !fixed && e.clientY > r.top + r.height / 2; dragCid = null; clearBlocks(); moveColl(id, fixed ? (state.collections.at(-1)?.id) : b.dataset.cid, fixed ? true : after); return; }
+   const c = e.target.closest?.('.gcard'); if (!c || dragUid == null) return; e.preventDefault(); const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2, id = dragUid; dragUid = null; clearDrop(); moveTo(id, Number(c.dataset.uid), after); });
+  document.addEventListener('dragend', () => { dragUid = null; dragCid = null; clearDrop(); clearBlocks(); });
 
   /* remember which settings panels are open (the toggle event does not bubble) */
   document.addEventListener('toggle', e => { const d = e.target.closest?.('[data-panel]'); if (d) { if (d.open) panelsOpen.add(d.dataset.panel); else panelsOpen.delete(d.dataset.panel); } }, true);
@@ -478,7 +530,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
   function mountChrome() {
     const style = document.createElement('style'); style.textContent = STYLE; document.head.append(style);
     const top = document.createElement('div'); top.id = 'top'; top.className = 'topbar';
-    top.innerHTML = `<div class="toprow"><h1>CONTENT // CONTROL</h1><span class="buttons seg"><button class="ghost on" data-screen="list">Edit list</button><button class="ghost" data-screen="grid">Grid layout</button></span><input id="search" type="search" placeholder="Search work…" aria-label="Search work"><span class="buttons"><button class="ghost" data-expand-all>Expand all</button><button class="ghost" data-collapse-all>Collapse all</button></span></div><div class="views" id="views" aria-label="Collections"></div>`;
+    top.innerHTML = `<div class="toprow"><h1>CONTENT // CONTROL</h1><span class="buttons seg"><button class="ghost on" data-screen="list">Edit list</button><button class="ghost" data-screen="grid">Grid layout</button></span><button class="ghost sortbtn on" data-sortmode>Sort by collections: ON</button><input id="search" type="search" placeholder="Search work…" aria-label="Search work"><span class="buttons"><button class="ghost" data-expand-all>Expand all</button><button class="ghost" data-collapse-all>Collapse all</button></span></div><div class="views" id="views" aria-label="Collections"></div>`;
     document.body.prepend(top);
     const fab = document.createElement('button'); fab.className = 'fab'; fab.setAttribute('data-new', ''); fab.setAttribute('aria-label', 'New work'); fab.title = 'New work (added to the selected collection)'; fab.textContent = '+';
     document.body.append(fab);

@@ -10,7 +10,7 @@
   /* ---------- normalise content ---------- */
   data.artist.socials = (data.artist.socials || []).filter(s => s.label?.toLowerCase() !== 'vimeo');
   data.collections = (data.collections || []).map((c, i) => ({ id: slug(c.id || c.title), title: c.title || title(c.id), description: c.description || '', rank: Number(c.rank) || i + 1 })).sort((a, b) => a.rank - b.rank);
-  data.layout = { cardWidth: Math.min(900, Math.max(160, Math.round(Number(data.layout?.cardWidth)) || 360)) };
+  data.layout = { cardWidth: Math.min(900, Math.max(160, Math.round(Number(data.layout?.cardWidth)) || 360)), sortMode: data.layout?.sortMode === 'manual' ? 'manual' : 'collections' };
   const setBase = () => { const phone = innerWidth <= 700, root = document.documentElement.style; root.setProperty('--card-base', (phone ? Math.floor((innerWidth * .9 - 13) / 2) : data.layout.cardWidth) + 'px'); root.setProperty('--grid-gap', phone ? '13px' : '18px'); };
   setBase(); addEventListener('resize', setBase);
   data.projects.forEach(p => {
@@ -29,6 +29,13 @@
   if (!data.projects.some(p => typeof p.featured === 'boolean')) ranked.slice(0, 6).forEach(p => { p.featured = true; });
   let favCount = 0; ranked.forEach(p => { p.featured = p.featured === true && favCount < 6; if (p.featured) favCount++; });
   const collection = id => data.collections.find(c => c.id === id) || { id, title: title(id) };
+  /* Work page order: grouped by collection (in collection rank order), each post under its first collection; unassigned work last. 'manual' sorting ignores this and uses the posts' own rank. */
+  const groupsOf = list => {
+    const known = data.collections.map(c => c.id), extra = [...new Set(list.flatMap(p => p.collectionIds))].filter(id => !known.includes(id)), order = [...known, ...extra], buckets = new Map();
+    list.forEach(p => { const id = order.find(k => p.collectionIds.includes(k)) || ''; if (!buckets.has(id)) buckets.set(id, []); buckets.get(id).push(p); });
+    return [...order, ''].filter(k => buckets.has(k)).map(k => ({ id: k, title: k ? collection(k).title : 'More work', posts: buckets.get(k) }));
+  };
+  const ordered = () => (data.layout.sortMode === 'manual' ? sorted() : groupsOf(sorted()).flatMap(g => g.posts));
 
   /* ---------- slides: main media first, then the carousel extras ---------- */
   function slidesOf(p) {
@@ -131,7 +138,7 @@
   document.querySelectorAll('[data-mailto]').forEach(el => { el.href = 'mailto:' + data.artist.email; }); /* keeps the button's own wording */
   const flexGrid = g => g && Object.assign(g.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--grid-gap,18px)', alignItems: 'flex-start', justifyContent: 'flex-start' });
   const featured = document.querySelector('[data-featured]'); flexGrid(featured);
-  if (featured) { featured.innerHTML = sorted().filter(p => p.featured).map(card).join(''); attach(featured, sorted); }
+  if (featured) { featured.innerHTML = sorted().filter(p => p.featured).map(card).join(''); attach(featured, ordered); }
 
   const gallery = document.querySelector('[data-gallery]'), filterBar = document.querySelector('[data-filters]');
   flexGrid(gallery);
@@ -160,9 +167,15 @@
     }
     const render = () => {
       const y = scrollY, h = gallery.offsetHeight;
-      visible = sorted().filter(p => (col === 'all' || (col === '__showcase' ? p.featured : p.collectionIds.includes(col))) && (!tag || p.tags.includes(tag)));
+      const keep = p => (col === 'all' || (col === '__showcase' ? p.featured : p.collectionIds.includes(col))) && (!tag || p.tags.includes(tag));
+      let html;
+      if (col === 'all' && data.layout.sortMode !== 'manual') {
+        const groups = groupsOf(sorted()).map(g => ({ ...g, posts: g.posts.filter(keep) })).filter(g => g.posts.length), headed = !(groups.length === 1 && !groups[0].id);
+        visible = groups.flatMap(g => g.posts);
+        html = groups.map(g => (headed ? `<div class="coll-head"><span class="coll-title">${g.title}</span><span class="coll-count">${String(g.posts.length).padStart(2, '0')}</span></div>` : '') + g.posts.map(card).join('') + (headed ? '<div class="coll-end"></div>' : '')).join('');
+      } else { visible = sorted().filter(keep); html = visible.map(card).join(''); }
       gallery.style.minHeight = h + 'px'; /* hold the page height while images reload so the scroll position stays put */
-      gallery.innerHTML = visible.length ? visible.map(card).join('') : '<p class="empty-note">Nothing matches this collection and filter yet.</p>';
+      gallery.innerHTML = visible.length ? html : '<p class="empty-note">Nothing matches this collection and filter yet.</p>';
       scrollTo(0, y); setTimeout(() => { gallery.style.minHeight = ''; }, 700);
     };
     render(); attach(gallery, () => visible);
