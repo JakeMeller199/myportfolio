@@ -46,6 +46,9 @@
     const ranked = [...projects].sort((a, b) => a.rank - b.rank);
     if (!projects.some(p => typeof p.featured === 'boolean')) ranked.slice(0, MAX_FAV).forEach(p => { p.featured = true; });
     let n = 0; ranked.forEach(p => { p.featured = p.featured === true && n < MAX_FAV; if (p.featured) n++; });
+    /* homepage order of the favourites: their own ranking (favRank), kept 1..n; a newly favourited post goes last */
+    projects.filter(p => p.featured).sort((a, b) => (a.favRank ?? 1000 + a.rank) - (b.favRank ?? 1000 + b.rank)).forEach((p, i) => { p.favRank = i + 1; });
+    projects.filter(p => !p.featured).forEach(p => { delete p.favRank; });
     return projects;
   };
   const normalize = data => ({
@@ -70,7 +73,8 @@
         extra: (p.extra || []).map(normExtra),
         tags: [...new Set((p.tags || []).map(slug).filter(Boolean))],
         collectionIds: [...new Set((p.collectionIds || (p.collection ? [p.collection] : [])).map(slug).filter(Boolean))],
-        featured: typeof p.featured === 'boolean' ? p.featured : undefined
+        featured: typeof p.featured === 'boolean' ? p.featured : undefined,
+        favRank: Number(p.favRank) || undefined
       };
     }))
   });
@@ -108,7 +112,8 @@
   /* ---------- filtering ---------- */
   const matchView = p => view === 'all' || (view === 'fav' && p.featured) || (view === 'none' && !p.collectionIds.length) || (view.startsWith('c:') && p.collectionIds.includes(view.slice(2)));
   const matchQuery = p => !query || [p.title, p.id, p.year, ...p.tags, ...p.collectionIds.map(collTitle)].join(' ').toLowerCase().includes(query.toLowerCase());
-  const visibleProjects = () => [...state.projects].sort((a, b) => a.rank - b.rank).filter(p => pinned.has(p.uid) || (matchView(p) && matchQuery(p)));
+  const favKey = p => p.favRank ?? 1000 + p.rank;
+  const visibleProjects = () => [...state.projects].sort((a, b) => (view === 'fav' ? favKey(a) - favKey(b) : 0) || a.rank - b.rank).filter(p => pinned.has(p.uid) || (matchView(p) && matchQuery(p)));
 
   /* ---------- markup ---------- */
   const cell = (cls, label, inner) => `<div class="cell ${cls}"><span class="lbl">${label}</span>${inner}</div>`;
@@ -170,7 +175,7 @@
     const tip = fav ? 'Selected Work — click to remove from the homepage' : full ? `All ${MAX_FAV} Selected Work slots are used — unfavorite another post first` : 'Add to the homepage Selected Work';
     return `<header class="phead" data-toggle>
       <button class="star ${fav ? 'on' : ''}" data-fav aria-pressed="${fav}" ${full ? 'disabled' : ''} title="${esc(tip)}">${fav ? '★' : '☆'}<span>${fav ? 'Selected' : 'Favorite'}</span></button>
-      <span class="rank">#${p.rank}</span><strong class="ptitle" data-heading>${esc(p.title || 'Untitled')}</strong>
+      <span class="rank">#${p.rank}</span>${fav ? `<span class="homepos" title="Position in the homepage Selected Work">Home ${p.favRank}</span>` : ''}<strong class="ptitle" data-heading>${esc(p.title || 'Untitled')}</strong>
       <span class="pmeta">${esc(p.year || '')} · ${p.type === 'video' ? 'Video' : 'Image'}${cols.length ? ` · ${cols.map(esc).join(', ')}` : ''}</span>
       ${isOpen ? '' : `<span class="mini">${previewHTML(p, true)}</span>`}
       <span class="grow"></span>
@@ -217,6 +222,7 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
 .cblock:not(.fixed) .chead{cursor:grab}.cgrip{color:#8f8a86;font-size:18px}.ctitle{display:inline-flex;align-items:center;gap:12px;font:22px Impact,'Arial Black',sans-serif;letter-spacing:.04em;text-transform:uppercase}.ctitle:before{content:'';width:9px;height:9px;background:#e8272e}.ccount{font-size:11px;letter-spacing:.14em;color:#f5f1e980}
 .chead .buttons button{padding:5px 9px}.cend{height:1px;margin-top:10px;background:linear-gradient(to right,#f5f1e90a,#f5f1e933)}.cempty{padding:10px 4px}
 .gridpreview.locked{background:transparent;border:0;padding:12px 0 0}.gridpreview.locked .gcard{cursor:default;opacity:.34;filter:grayscale(1);pointer-events:none}.gridpreview.locked .gcard.fav .gmedia{outline-color:#f4d21f88}
+.homepos{background:#f4d21f;color:#111;font-size:11px;font-weight:bold;padding:3px 7px;white-space:nowrap}
 .fab{position:fixed;right:22px;bottom:84px;z-index:9;width:58px;height:58px;border-radius:50%;font-size:34px;line-height:1;padding:0 0 4px;box-shadow:0 6px 18px #000a,0 0 0 3px #101011}.fab:hover{filter:brightness(1.15);transform:scale(1.05)}
 .sticky{position:fixed;z-index:7;bottom:0;left:0;right:0;background:#101011ee;border-top:1px solid #555;padding:12px max(16px,calc((100vw - 1240px)/2 + 16px));display:flex;justify-content:space-between;gap:12px;align-items:center}.status{color:#f4d21f;font-size:12px}
 @media(max-width:1000px){.c1,.c2,.c3,.c4{grid-column:span 6}.c5,.c6,.c8{grid-column:span 12}.pbody{grid-template-columns:1fr}.preview{order:-1;max-width:300px}}
@@ -305,12 +311,12 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     const sb = $('[data-sortmode]'); if (sb) { sb.classList.toggle('on', byCollections()); sb.textContent = `Sort by collections: ${byCollections() ? 'ON' : 'OFF'}`; }
     if (screen === 'grid') { renderGrid(); return; }
     const scroll = scrollY;
-    renumber(); renumberCollections();
+    renumber(); renumberCollections(); applyFeatured(state.projects);
     if (view.startsWith('c:') && !state.collections.some(c => c.id === view.slice(2))) view = 'all';
     const a = state.artist, social = name => a.socials?.find(s => s.label === name)?.url || '';
     const usage = id => state.projects.filter(p => p.collectionIds.includes(id)).length;
     const list = visibleProjects();
-    const hint = byCollections() && view === 'all' ? 'The Work page groups posts by collection; order inside a collection follows rank.' : view.startsWith('c:') ? 'New work you add here is placed in this collection.' : view === 'fav' ? 'These appear on the homepage, in rank order.' : '';
+    const hint = byCollections() && view === 'all' ? 'The Work page groups posts by collection; order inside a collection follows rank.' : view.startsWith('c:') ? 'New work you add here is placed in this collection.' : view === 'fav' ? 'Homepage order — use ↑ ↓ to rank these as they appear on the homepage.' : '';
     renderViews();
     $('#app').innerHTML = `<main class="wrap">
       ${panel('artist', 'Artist information', esc(a.name || ''), `<div class="pgrid" data-artist-section>${cell('c3', 'Name', input('name', a.name || ''))}${cell('c3', 'Email', input('email', a.email || '', 'email'))}${cell('c3', 'Instagram URL', input('instagram', social('Instagram')))}${cell('c3', 'YouTube URL', input('youtube', social('YouTube')))}${cell('c6', 'Role / strapline', input('role', a.role || ''))}${cell('c6', 'Biography', area('bio', a.bio || ''))}</div>`)}
@@ -444,6 +450,11 @@ button{border:0;background:#e8272e;color:#fff;padding:8px 11px;font:700 12px ui-
     if (t.closest('[data-toggle-btn]') || (t.closest('.phead') && !t.closest('button'))) { sync(); if (open.has(p.uid)) open.delete(p.uid); else open.add(p.uid); render(); return; }
     if (t.closest('[data-duplicate]')) { duplicate(p); return; }
     if (t.closest('[data-remove]')) { sync(); state.projects = state.projects.filter(x => x !== p); open.delete(p.uid); render(); status(`Removed "${p.title}".`); return; }
+    if (t.closest('[data-move]') && view === 'fav' && p.featured) {
+      sync(); const favs = visibleProjects().filter(x => x.featured), q = favs[favs.indexOf(p) + (t.closest('[data-move]').dataset.move === 'up' ? -1 : 1)];
+      if (q) { [p.favRank, q.favRank] = [q.favRank, p.favRank]; status(`"${p.title}" is now #${p.favRank} on the homepage.`); }
+      render(); return;
+    }
     if (t.closest('[data-move]')) {
       sync(); renumber();
       const vis = visibleProjects(), q = vis[vis.indexOf(p) + (t.closest('[data-move]').dataset.move === 'up' ? -1 : 1)];

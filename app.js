@@ -29,6 +29,8 @@
   const ranked = [...data.projects].sort((a, b) => a.rank - b.rank);
   if (!data.projects.some(p => typeof p.featured === 'boolean')) ranked.slice(0, 6).forEach(p => { p.featured = true; });
   let favCount = 0; ranked.forEach(p => { p.featured = p.featured === true && favCount < 6; if (p.featured) favCount++; });
+  const favKey = p => Number(p.favRank) || 1000 + p.rank; /* the homepage order is the favourites' own ranking, not the work order */
+  data.projects.filter(p => p.featured).sort((x, y) => favKey(x) - favKey(y)).forEach((p, i) => { p.favRank = i + 1; });
   const collection = id => data.collections.find(c => c.id === id) || { id, title: title(id) };
   /* Work page order: grouped by collection (in collection rank order), each post under its first collection; unassigned work last. 'manual' sorting ignores this and uses the posts' own rank. */
   const groupsOf = list => {
@@ -140,7 +142,7 @@
   document.querySelectorAll('[data-mailto]').forEach(el => { el.href = 'mailto:' + data.artist.email; }); /* keeps the button's own wording */
   const flexGrid = g => g && Object.assign(g.style, { display: 'flex', flexWrap: 'wrap', gap: 'var(--grid-gap,18px)', alignItems: 'flex-start', justifyContent: 'flex-start' });
   const featured = document.querySelector('[data-featured]'); flexGrid(featured);
-  if (featured) { featured.innerHTML = sorted().filter(p => p.featured).map(card).join(''); attach(featured, ordered); }
+  if (featured) { featured.innerHTML = data.projects.filter(p => p.featured).sort((x, y) => x.favRank - y.favRank).map(card).join(''); attach(featured, ordered); }
 
   const gallery = document.querySelector('[data-gallery]'), filterBar = document.querySelector('[data-filters]');
   flexGrid(gallery);
@@ -175,7 +177,7 @@
         const groups = groupsOf(sorted()).map(g => ({ ...g, posts: g.posts.filter(keep) })).filter(g => g.posts.length), headed = !(groups.length === 1 && !groups[0].id);
         visible = groups.flatMap(g => g.posts);
         html = groups.map(g => (headed ? `<div class="coll-head"><span class="coll-title">${g.title}</span><span class="coll-count">${String(g.posts.length).padStart(2, '0')}</span></div>` : '') + g.posts.map(card).join('') + (headed ? '<div class="coll-end"></div>' : '')).join('');
-      } else { visible = sorted().filter(keep); html = visible.map(card).join(''); }
+      } else { visible = sorted().filter(keep); if (col === '__showcase') visible.sort((x, y) => x.favRank - y.favRank); html = visible.map(card).join(''); }
       gallery.style.minHeight = h + 'px'; /* hold the page height while images reload so the scroll position stays put */
       gallery.innerHTML = visible.length ? html : '<p class="empty-note">Nothing matches this collection and filter yet.</p>';
       scrollTo(0, y); setTimeout(() => { gallery.style.minHeight = ''; }, 700);

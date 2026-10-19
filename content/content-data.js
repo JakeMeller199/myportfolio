@@ -98,7 +98,8 @@ window.PORTFOLIO_CONTENT = {
       "extra": [],
       "thumbMode": "auto",
       "thumb": "",
-      "featured": true
+      "featured": true,
+      "favRank": 1
     },
     {
       "id": "moshrooms2",
@@ -125,7 +126,8 @@ window.PORTFOLIO_CONTENT = {
       "extra": [],
       "thumbMode": "auto",
       "thumb": "",
-      "featured": true
+      "featured": true,
+      "favRank": 2
     },
     {
       "id": "moshrooms1",
@@ -180,7 +182,8 @@ window.PORTFOLIO_CONTENT = {
       "extra": [],
       "thumbMode": "auto",
       "thumb": "",
-      "featured": true
+      "featured": true,
+      "favRank": 4
     },
     {
       "id": "muc1",
@@ -440,7 +443,8 @@ window.PORTFOLIO_CONTENT = {
       "extra": [],
       "thumbMode": "auto",
       "thumb": "",
-      "featured": true
+      "featured": true,
+      "favRank": 3
     },
     {
       "id": "cryptblackplanet2",
@@ -925,7 +929,8 @@ window.PORTFOLIO_CONTENT = {
       "media": "",
       "videoUrl": "https://youtu.be/Gc2953gTM1g",
       "accent": "red",
-      "featured": true
+      "featured": true,
+      "favRank": 5
     },
     {
       "id": "mosh-visuals-example",
@@ -953,7 +958,8 @@ window.PORTFOLIO_CONTENT = {
       "media": "",
       "videoUrl": "https://youtu.be/ZCGu0I1rLnk",
       "accent": "red",
-      "featured": true
+      "featured": true,
+      "favRank": 6
     },
     {
       "id": "crypt-visuals-example",
